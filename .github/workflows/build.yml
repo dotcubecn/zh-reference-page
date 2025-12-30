@@ -39,9 +39,12 @@ jobs:
         working-directory: ./source_repo
         run: |
           CURRENT_YEAR=$(date +%Y)
+          UPDATE_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+          
           echo "REF_URL=${{ vars.REF_URL || 'https://0x0f.dev/' }}" > .env
           echo "REF_LABEL=${{ vars.REF_LABEL || '0x0f.dev' }}" >> .env
-          echo "LICENSE=© 2024-$CURRENT_YEAR <a href=\"https://0x0f.dev/\" target=\"_blank\">dotcubecn</a>" >> .env
+          echo "LICENSE=© 2024-$CURRENT_YEAR <a href=\"https://0x0f.dev/\" target=\"_blank\">dotcubecn</a>. 最后更新于 $UPDATE_TIME (UTC+8)" >> .env
+          
           npm install
           npm run build
 
