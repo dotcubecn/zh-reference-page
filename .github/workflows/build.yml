@@ -1,0 +1,66 @@
+name: Quick Reference Sync
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v3
+        with:
+          ref: 'main'
+
+      - name: Checkout source repository
+        uses: actions/checkout@v3
+        with:
+          repository: 'jaywcjlove/reference'
+          path: 'source_repo'
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies and build
+        working-directory: ./source_repo
+        run: |
+          CURRENT_YEAR=$(date +%Y)
+          echo "REF_URL=${{ vars.REF_URL || 'https://0x0f.dev/' }}" > .env
+          echo "REF_LABEL=${{ vars.REF_LABEL || 'Home' }}" >> .env
+          echo "LICENSE=© 2024-$CURRENT_YEAR <a href=\"https://0x0f.dev/\">dotcubecn</a>" >> .env
+          npm install
+          npm run build
+
+      - name: Sync files to public directory
+        run: |
+          rm -rf public
+          mkdir -p public
+          cp -r source_repo/dist/* public/
+          rm -rf source_repo
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          COMMIT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+          git add public/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update reference docs: $COMMIT_TIME"
+            git push
+          fi
